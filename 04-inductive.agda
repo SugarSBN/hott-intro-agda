@@ -1,8 +1,8 @@
 {-# OPTIONS --without-K --exact-split --safe #-}
 module 04-inductive where
 
-import 00-preamble
-open 00-preamble public
+import 03-naturals
+open 03-naturals public
 
 -- Definition 4.2.1
 data unit : UU lzero where
@@ -101,3 +101,102 @@ prod : {i j : Level} (A : UU i) (B : UU j) → UU (i ⊔ j)
 prod A B = A ⋆ (λ a → B)
 
 _×_ = prod
+
+
+-- Definition 4.7.1
+ℤ : UU lzero
+ℤ = ℕ ∔ (𝟙 ∔ ℕ)
+
+in-neg : ℕ → ℤ
+in-neg n = inl n
+
+neg-one-ℤ : ℤ
+neg-one-ℤ = in-neg zero-ℕ
+
+zero-ℤ : ℤ
+zero-ℤ = inr (inl star)
+
+one-ℤ : ℤ
+one-ℤ = inr (inr zero-ℕ)
+
+in-pos : ℕ → ℤ
+in-pos n = inr (inr n)
+
+int-ℕ : ℕ → ℤ
+int-ℕ zero-ℕ = zero-ℤ
+int-ℕ (succ-ℕ n) = in-pos n
+
+ind-ℤ : {i : Level} (P : ℤ → UU i) → 
+    P neg-one-ℤ → ((n : ℕ) → P (inl n) → P (inl (succ-ℕ n))) →
+    P zero-ℤ →
+    P one-ℤ → ((n : ℕ) → P (inr (inr n)) → P (inr (inr (succ-ℕ n)))) →
+    (n : ℤ) → P n
+ind-ℤ P pn1 indn p0 p1 ind (inr (inl star)) = p0
+ind-ℤ P pn1 indn p0 p1 ind (inl zero-ℕ) = pn1
+ind-ℤ P pn1 indn p0 p1 ind (inl (succ-ℕ n)) = indn n (ind-ℤ P pn1 indn p0 p1 ind (inl n))
+ind-ℤ P pn1 indn p0 p1 ind (inr (inr zero-ℕ)) = p1
+ind-ℤ P pn1 indn p0 p1 ind (inr (inr (succ-ℕ n))) = ind n (ind-ℤ P pn1 indn p0 p1 ind (inr (inr n)))
+
+-- Definition 4.7.3
+succ-ℤ : ℤ → ℤ
+succ-ℤ (inl zero-ℕ) = zero-ℤ
+succ-ℤ (inl (succ-ℕ n)) = inl n
+succ-ℤ (inr (inl star)) = one-ℤ
+succ-ℤ (inr (inr n)) = inr (inr (succ-ℕ n))
+
+-- Exercise 4.1(a)
+pred-ℤ : ℤ → ℤ
+pred-ℤ (inl n) = inl (succ-ℕ n)
+pred-ℤ (inr (inl star)) = neg-one-ℤ
+pred-ℤ (inr (inr zero-ℕ)) = zero-ℤ
+pred-ℤ (inr (inr (succ-ℕ n))) = inr (inr n)
+
+-- Exercise 4.1(b)
+add-ℤ : ℤ → ℤ → ℤ
+add-ℤ (inl zero-ℕ) m = pred-ℤ m
+add-ℤ (inl (succ-ℕ n)) m = pred-ℤ (add-ℤ (inl n) m)
+add-ℤ (inr (inl star)) m = m
+add-ℤ (inr (inr zero-ℕ)) m = succ-ℤ m
+add-ℤ (inr (inr (succ-ℕ n))) m = succ-ℤ (add-ℤ (inr (inr n)) m)
+
+neg-ℤ : ℤ → ℤ
+neg-ℤ (inr (inl star)) = zero-ℤ
+neg-ℤ (inr (inr n)) = inl n
+neg-ℤ (inl n) = inr (inr n)
+
+-- Exercise 4.1(c)
+mul-ℤ : ℤ → ℤ → ℤ
+mul-ℤ (inr (inl star)) m = zero-ℤ
+mul-ℤ (inl zero-ℕ) m = neg-ℤ m
+mul-ℤ (inl (succ-ℕ n)) m = add-ℤ (neg-ℤ m) (mul-ℤ (inl n) m)
+mul-ℤ (inr (inr zero-ℕ)) m = m
+mul-ℤ (inr (inr (succ-ℕ n))) m = add-ℤ m (mul-ℤ (inr (inr n)) m)
+
+-- Exercise 4.2(a)
+_ : {i : Level} {A : UU i} → (p : A) → ¬ (¬ A)
+_ = λ p inv → ex-falso (inv p) 
+
+-- Exercise 4.8(a)
+data list {i : Level} (A : UU i) : UU i where
+  nil  : list A
+  cons : A → list A → list A
+
+ind-list : {i : Level} {A : UU i} → A → list A
+ind-list a = cons a nil
+
+-- Exercise 4.8(b)
+fold-list : {i1 i2 : Level} {A : UU i1} {B : UU i2} → (b : B) → (μ : A → B → B) → list A → B
+fold-list b μ nil = b
+fold-list b μ (cons a l) = fold-list (μ a b) μ l
+
+length-list : {i : Level} {A : UU i} → list A → ℕ
+length-list nil = zero-ℕ
+length-list (cons a l) = succ-ℕ (length-list l)
+
+concat-list : {i : Level} {A : UU i} → list A → list A → list A 
+concat-list nil b = b 
+concat-list (cons a l) b = cons a (concat-list l b)
+
+reverse-list : {i : Level} {A : UU i} → list A → list A 
+reverse-list nil = nil
+reverse-list (cons a l) = concat-list (reverse-list l) (ind-list a)
