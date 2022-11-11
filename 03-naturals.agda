@@ -1,8 +1,8 @@
 {-# OPTIONS --without-K --exact-split --safe #-}
 module 03-naturals where
 
-import 00-preamble
-open 00-preamble public
+import 02-function
+open 02-function public
 
 data ℕ : UU lzero where
     zero-ℕ : ℕ
