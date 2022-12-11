@@ -57,7 +57,10 @@ data coprod {i j : Level} (A : UU i) (B : UU j) : UU (i ⊔ j) where
 
 _∔_ = coprod
 
-ind-coprod : {i j k : Level} {A : UU i} {B : UU j} (P : A ∔ B → UU k) → ((x : A) → P (inl x)) → ((y : B) → P (inr y)) → ((t : A ∔ B) → P t)
+ind-coprod : {i j k : Level} {A : UU i} {B : UU j} (P : A ∔ B → UU k) → 
+             ((x : A) → P (inl x)) → 
+             ((y : B) → P (inr y)) → 
+             ((t : A ∔ B) → P t)
 ind-coprod P f g (inl x) = f x
 ind-coprod P f g (inr y) = g y
 
@@ -200,3 +203,48 @@ concat-list (cons a l) b = cons a (concat-list l b)
 reverse-list : {i : Level} {A : UU i} → list A → list A 
 reverse-list nil = nil
 reverse-list (cons a l) = concat-list (reverse-list l) (ind-list a)
+
+leq-ℕ : ℕ → ℕ → UU lzero 
+leq-ℕ zero-ℕ m = 𝟙 
+leq-ℕ (succ-ℕ n) zero-ℕ = 𝟘 
+leq-ℕ (succ-ℕ n) (succ-ℕ m) = leq-ℕ n m 
+
+_<=_ = leq-ℕ
+
+
+leq-excluded-middle-ℕ : {x y : ℕ} → 
+                        (x <= y) ∔ (y <= x)
+leq-excluded-middle-ℕ {zero-ℕ} {y} = inl star
+leq-excluded-middle-ℕ {succ-ℕ x} {zero-ℕ} = inr star 
+leq-excluded-middle-ℕ {succ-ℕ x} {succ-ℕ y} = leq-excluded-middle-ℕ {x} {y}
+
+leq-three-ℕ' : {x y z : ℕ} → 
+              ((x <= y) ∔ (y <= x)) → 
+              ((x <= z) ∔ (z <= x)) → 
+              ((y <= z) ∔ (z <= y)) → 
+               ((x <= y) × (y <= z)) ∔
+              (((x <= z) × (z <= y)) ∔
+              (((y <= x) × (x <= z)) ∔
+              (((y <= z) × (z <= x)) ∔
+              (((z <= x) × (x <= y)) ∔
+               ((z <= y) × (y <= x))))))
+leq-three-ℕ' (inl a) (inl b) (inl c) = inl (pair a c)
+leq-three-ℕ' (inl a) (inl b) (inr c) = inr (inl (pair b c))
+leq-three-ℕ' (inl a) (inr b) (inl c) = inr (inr (inr (inl (pair c b))))
+leq-three-ℕ' (inl a) (inr b) (inr c) = inr (inr (inr (inr (inl (pair b a)))))
+leq-three-ℕ' (inr a) (inl b) (inl c) = inr (inr (inl (pair a b)))
+leq-three-ℕ' (inr a) (inl b) (inr c) = inr (inr (inl (pair a b)))
+leq-three-ℕ' (inr a) (inr b) (inl c) = inr (inr (inr (inl (pair c b))))
+leq-three-ℕ' (inr a) (inr b) (inr c) = inr (inr (inr (inr (inr (pair c a)))))
+
+leq-three-ℕ : {x y z : ℕ} → 
+               ((x <= y) × (y <= z)) ∔
+              (((x <= z) × (z <= y)) ∔
+              (((y <= x) × (x <= z)) ∔
+              (((y <= z) × (z <= x)) ∔
+              (((z <= x) × (x <= y)) ∔
+               ((z <= y) × (y <= x))))))
+leq-three-ℕ {x} {y} {z} = leq-three-ℕ' {x} {y} {z}
+                                       (leq-excluded-middle-ℕ {x} {y}) 
+                                       (leq-excluded-middle-ℕ {x} {z}) 
+                                       (leq-excluded-middle-ℕ {y} {z})

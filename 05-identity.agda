@@ -116,6 +116,31 @@ commutative-add-ℕ :
 commutative-add-ℕ n zero-ℕ = (right-unit-law-add-ℕ n) · (inv (left-unit-law-add-ℕ n))
 commutative-add-ℕ n (succ-ℕ m) = (ap succ-ℕ (commutative-add-ℕ n m)) · (inv (left-successor-law-add-ℕ m n)) 
 
+mul-zero-left-ℕ : {n : ℕ} →  
+                  (mul-ℕ zero-ℕ n) ≡ zero-ℕ 
+mul-zero-left-ℕ {zero-ℕ} = refl
+mul-zero-left-ℕ {succ-ℕ n} = (left-unit-law-add-ℕ (mul-ℕ zero-ℕ n)) · (mul-zero-left-ℕ {n})
+
+swap-add-ℕ : {a b c : ℕ} → 
+             (add-ℕ a (add-ℕ b c)) ≡ add-ℕ b (add-ℕ a c)
+swap-add-ℕ {a} {b} {c} = (inv (associative-add-ℕ a b c)) · ((ap (λ n → add-ℕ n c) (commutative-add-ℕ a b)) · (associative-add-ℕ b a c))
+-- a+(b+c)=b+(a+c)
+-- a+(b+c)=(a+b)+c
+-- (a+b)+c=(b+a)+c
+-- (b+a)+c=b+(a+c)
+exchange-add-ℕ : {a b c d : ℕ} →
+                 (add-ℕ (add-ℕ a b) (add-ℕ c d)) ≡ (add-ℕ (add-ℕ a c) (add-ℕ b d))
+exchange-add-ℕ {a} {b} {c} {d} = ((associative-add-ℕ a b (add-ℕ c d)) · (ap (λ n → add-ℕ a n) (swap-add-ℕ {b} {c} {d}))) · (inv (associative-add-ℕ a c (add-ℕ b d)))
+
+-- (a+b)+(c+d)=a+(b+(c+d))=a+(c+(b+d))=(a+c)+(b+d)
+
+mul-right-distribution-ℕ : {a b c : ℕ} → 
+                           (mul-ℕ (add-ℕ a b) c) ≡ (add-ℕ (mul-ℕ a c) (mul-ℕ b c))
+mul-right-distribution-ℕ {a} {b} {zero-ℕ} = refl
+mul-right-distribution-ℕ {a} {b} {succ-ℕ c} = (ap (λ n → add-ℕ (add-ℕ a b) n) (mul-right-distribution-ℕ {a} {b} {c})) · (exchange-add-ℕ {a} {b} {mul-ℕ a c} {mul-ℕ b c})
+-- (a+b)*(c+1)=(a+b)+(a+b)*c=(a+b)+((a*c)+(b*c))
+-- (a+b)+((a*c)+(b*c))=((a+a*c)+(b+b*c))
+
 -- Exercise 5.2
 distribute-inv-concat : {i : Level} {A : UU i} {x y z : A} → 
                         (p : x ≡ y) → 
@@ -130,5 +155,3 @@ lift : {i j : Level} {A : UU i} {B : A → UU j} {x x1 : A} →
        (pair x y) ≡ (pair x1 (tr {B = B} p y))
 lift refl y = refl
 
-
- 
