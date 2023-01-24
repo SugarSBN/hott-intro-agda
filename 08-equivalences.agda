@@ -152,7 +152,6 @@ has-inversion-is-equiv : {i j : Level} {A : UU i} {B : UU j} →
                          has-inverse f → is-equiv f
 has-inversion-is-equiv {i} {j} {A} {B} f (pair g (pair H K)) = pair (pair g K) (pair g H)
 
-
 -- Definition of Σ-type equality
 Σ-eq : {i j : Level} {A : UU i} {B : A → UU j} → 
        (s t : Σ A B) → UU (i ⊔ j)
@@ -175,5 +174,14 @@ pair-eq {s = s} refl = Σ-eq-refl s
 -- Definition of product equality
 prod-eq : {i j : Level} {A : UU i} {B : UU j} → 
           (s t : A × B) → UU (i ⊔ j)
-prod-eq s t = pair (pr1 s ≡ pr1 t) (pr2 s ≡ pr2 t)
+prod-eq s t = (pr1 s ≡ pr1 t) × (pr2 s ≡ pr2 t)
 
+eq-pair : {i j : Level} {A : UU i} {B : A → UU j} → 
+          {s t : Σ A B} → 
+          (α : pr1 s ≡ pr1 t) → (tr {B = B} α (pr2 s)) ≡ (pr2 t) → s ≡ t 
+eq-pair {B = B} {pair x y} {pair x1 y1} refl refl = refl
+
+Σ-eq-≡ : {i j : Level} {A : UU i} {B : A → UU j} → 
+          {s t : Σ A B} →
+           Σ-eq s t → s ≡ t
+Σ-eq-≡ (pair α β) = eq-pair α β
