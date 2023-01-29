@@ -27,19 +27,16 @@ refl · q = q
 inv : {i : Level} {A : UU i} {x y : A} → x ≡ y → y ≡ x
 inv refl = refl
 
+inv-inv : {i : Level} {A : UU i} {x y : A} → (p : x ≡ y) → inv (inv p) ≡ p 
+inv-inv refl = refl 
+
 -- Definition 5.2.3
 assoc : {i : Level} {A : UU i} {x y z w : A} → 
         (p : x ≡ y) (q : y ≡ z) (r : z ≡ w) →
         ((p · q) · r) ≡ (p · (q · r))
 assoc refl _ _ = refl
 
-inv-concat : {i : Level} {A : UU i} {x y : A} → 
-              (p : x ≡ y) → (p · (inv p)) ≡ refl
-inv-concat refl = refl
 
-concat-inv : {i : Level} {A : UU i} {x y : A} → 
-              (p : x ≡ y) → ((inv p) · p) ≡ refl
-concat-inv refl = refl
 -- Definition 5.2.4
 left-unit : {i : Level} {A : UU i} {x y : A} (p : x ≡ y) → (refl · p) ≡ p
 left-unit refl = refl 

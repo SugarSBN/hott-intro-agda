@@ -82,6 +82,7 @@ coprod-elim-right na (inr y) = y
 data Σ {i j : Level} (A : UU i) (B : A → UU j) : UU (i ⊔ j) where
     pair : (x : A) → (B x → Σ A B)
 
+
 _⋆_ = Σ
 
 ind-Σ : {i j k : Level} {A : UU i} {B : A → UU j} → (P : A ⋆ B → UU k) → ((x : A) (y : B x) → P (pair x y)) → ((t : A ⋆ B) → P t)

@@ -185,3 +185,7 @@ eq-pair {B = B} {pair x y} {pair x1 y1} refl refl = refl
           {s t : Σ A B} →
            Σ-eq s t → s ≡ t
 Σ-eq-≡ (pair α β) = eq-pair α β
+
+logic-equiv : {i j : Level} (A : UU i) (B : UU j) → UU (i ⊔ j)
+logic-equiv A B = (A → B) × (B → A)
+_↔_ = logic-equiv

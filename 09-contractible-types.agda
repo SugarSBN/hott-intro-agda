@@ -25,6 +25,28 @@ is-single star = refl
 unit-is-contr : is-contr unit
 unit-is-contr = pair star (λ x → is-single x)
 
+-- Theorem 8.1.7 Σ A (λ x → a ≡ x) is contractible
+-- In other words, the space of paths starting at a fixed point a is contractible
+path-contr : {i : Level} {A : UU i} → 
+                (a : A) → 
+                is-contr (Σ A (λ x → a ≡ x))
+path-contr {i = i} {A = A} a = pair center eq1
+    where
+        center : Σ A (λ x → a ≡ x)
+        center = pair a refl
+
+        P : {x : A} → (p : a ≡ x) → UU i 
+        P {x = x} p = center ≡ (pair x p)
+
+        init : P {a} refl 
+        init = refl
+        
+        eq' : {x : A} → (p : a ≡ x) → center ≡ (pair x p)
+        eq' = ind-≡ P init
+
+        eq1 : (r : Σ A (λ x → a ≡ x)) → center ≡ r
+        eq1 (pair x p) = eq' p
+
 -- Definition: fiber of a map
 -- the fiber of f at b is the type of a: a that get mapped by f to b
 fib : {i j : Level} {A : UU i} {B : UU j} → 
@@ -133,13 +155,13 @@ homotopy-ap {A = A} f H x = tmp8
                 r1 = inv (H x)
         
         tmp4 : ((ap id (H x)) · (inv (ap id (H x)))) ≡ refl
-        tmp4 = inv-concat (ap id (H x))
+        tmp4 = right-inv (ap id (H x))
 
         tmp5 : H (f x) ≡ ((H (f x)) · ((ap id (H x)) · (inv (ap id (H x)))))
         tmp5 = (inv (right-unit (H (f x)))) · (tmp1 refl (inv tmp4))
         
         tmp6 : ((H x) · (inv (H x))) ≡ refl 
-        tmp6 = inv-concat (H x)
+        tmp6 = right-inv (H x)
 
         tmp7 : ((ap f (H x)) · ((H x) · (inv (H x)))) ≡ ((ap f (H x)))
         tmp7 = (ap (λ α → (ap f (H x)) · α) tmp6) · (right-unit (ap f (H x)))
@@ -191,7 +213,7 @@ has-inverse-is-coh-invertible {A = A} f f-has-inverse = pair G1 G1-eq7
         G1-eq4 x = (tmp · (assoc (inv (G (f (g (f x))))) (G (f (g (f x)))) (ap f (H x)))) · (ap (λ α → (inv (G (f (g (f x))))) · α) (G1-eq3 x))
             where
                 tmp : (ap f (H x)) ≡ (((inv (G (f (g (f x))))) · (G (f (g (f x))))) · (ap f (H x)))
-                tmp = ap (λ β → β · (ap f (H x))) (inv (concat-inv (G (f (g (f x))))))
+                tmp = ap (λ β → β · (ap f (H x))) (inv (left-inv (G (f (g (f x))))))
         
         G1-eq5 : (x : A) → (f ·l H) x ≡ (ap f (H x))
         G1-eq5 x = refl
@@ -256,4 +278,171 @@ equiv-map-is-contr f f-is-equiv y = coh-invertible-is-contr f (pr1 f-has-reverse
 
         f-is-coh-invertible = has-inverse-is-coh-invertible f f-has-reverse
         G = pr1 f-is-coh-invertible
-        K = pr2 f-is-coh-invertible
+        K = pr2 f-is-coh-invertible 
+
+contr-homotopy : {i j : Level} {A : UU i} {B : UU j} → 
+                    A ≃ B → is-contr A → is-contr B 
+contr-homotopy {A = A} {B = B} simeq A-is-contr = pair B-contr-center eq'
+    where
+        F : A → B 
+        F = pr1 simeq 
+        F-section = pr1 (pr2 simeq)
+        F-retraction = pr2 (pr2 simeq)
+
+        A-contr-center : A
+        A-contr-center = pr1 A-is-contr 
+
+        B-contr-center : B 
+        B-contr-center = F A-contr-center
+
+        G : B → A 
+        G = pr1 F-section
+        
+        sec : (F ∘ G) ~ id 
+        sec = pr2 F-section
+
+        eq' : (r : B) → (B-contr-center ≡ r)
+        eq' r = tmp1 · tmp3 
+            where
+                tmp : A-contr-center ≡ G r 
+                tmp = pr2 A-is-contr (G r)
+
+                tmp1 : B-contr-center ≡ F (G r)
+                tmp1 = ap F tmp
+
+                tmp3 : F (G r) ≡ r 
+                tmp3 = sec r
+
+-- Proposition : contractible space is homotopy to a point
+contr-is-point : {i : Level} {A : UU i} → is-contr A → A ≃ unit 
+contr-is-point {A = A} A-is-contr = pair F F-is-equiv
+    where
+        F : A → unit
+        F x = star
+        
+        A-contr-center : A 
+        A-contr-center = pr1 A-is-contr
+
+        A-contr-eq : (x : A) → A-contr-center ≡ x 
+        A-contr-eq x = (pr2 A-is-contr) x 
+
+        F-is-contr : map-is-contr F 
+        F-is-contr star = pair cent eq'
+            where
+                cent : fib F star
+                cent = pair A-contr-center refl
+
+                eq' : (r : fib F star) → (cent ≡ r)
+                eq' (pair x refl) = tmp2
+                    where
+                        tmp1 : A-contr-center ≡ x 
+                        tmp1 = A-contr-eq x
+                        
+                        tmp2 : pair A-contr-center refl ≡ pair x refl
+                        tmp2 = ap (λ x → pair x refl) tmp1
+
+        F-is-equiv : is-equiv F 
+        F-is-equiv = contr-map-is-equiv F F-is-contr
+
+-- Homotopy is transitive
+homotopy-transitive : {i j k : Level} {A : UU i} {B : UU j} {C : UU k} → 
+                        A ≃ B → B ≃ C → A ≃ C 
+homotopy-transitive {A = A} {B = B} {C = C} simeq1 simeq2 = pair F (pair F-section F-retraction)
+    where
+        F1 : A → B 
+        F1 = pr1 simeq1
+        F2 : B → C
+        F2 = pr1 simeq2
+
+        F : A → C 
+        F = F2 ∘ F1
+
+        F-section : section F 
+        F-section = pair G H
+            where
+                G1 : B → A
+                G1 = pr1 (pr1 (pr2 simeq1))
+
+                H1 : (F1 ∘ G1) ~ id 
+                H1 = pr2 (pr1 (pr2 simeq1))
+
+                G2 : C → B
+                G2 = pr1 (pr1 (pr2 simeq2))
+
+                H2 : (F2 ∘ G2) ~ id
+                H2 = pr2 (pr1 (pr2 simeq2))
+
+                G : C → A 
+                G = G1 ∘ G2
+
+                H : (F ∘ G) ~ id 
+                H x = (ap F2 (H1 (G2 x))) · (H2 x)
+
+        F-retraction : retraction F
+        F-retraction = pair G H
+            where
+                G1 : B → A
+                G1 = pr1 (pr2 (pr2 simeq1))
+
+                H1 : (G1 ∘ F1) ~ id 
+                H1 = pr2 (pr2 (pr2 simeq1))
+
+                G2 : C → B
+                G2 = pr1 (pr2 (pr2 simeq2))
+
+                H2 : (G2 ∘ F2) ~ id
+                H2 = pr2 (pr2 (pr2 simeq2))
+
+                G : C → A 
+                G = G1 ∘ G2
+
+                H : (G ∘ F) ~ id 
+                H x = (ap G1 (H2 (F1 x))) · (H1 x)
+
+homotopy-inv : {i j : Level} {A : UU i} {B : UU j} → 
+                A ≃ B → B ≃ A
+homotopy-inv {A = A} {B = B} simeq = pair G (pair G-section G-retraction)
+    where
+        F : A → B 
+        F = pr1 simeq
+
+        F-has-inverse : has-inverse F 
+        F-has-inverse = equiv-map-has-inverse F (pr2 simeq)
+
+        G : B → A 
+        G = pr1 F-has-inverse
+
+        H1 : (G ∘ F) ~ id 
+        H1 = pr1 (pr2 F-has-inverse)
+
+        H2 : (F ∘ G) ~ id
+        H2 = pr2 (pr2 F-has-inverse)
+
+        G-section : section G
+        G-section = pair F H1
+
+        G-retraction : retraction G
+        G-retraction = pair F H2
+
+retract-contr : {i j : Level} {A : UU i} {B : UU j} → 
+                (f : A → B) → retraction f → is-contr B →
+                is-contr A 
+retract-contr {A = A} {B = B} f f-retract B-contr = pair centA eqA
+    where
+        g : B → A 
+        g = pr1 f-retract 
+
+        g-f : (g ∘ f) ~ id
+        g-f = pr2 f-retract
+
+        centB : B 
+        centB = pr1 B-contr
+
+        eqB : (r : B) → centB ≡ r 
+        eqB = pr2 B-contr
+
+        centA : A 
+        centA = g centB 
+
+        eqA : (r : A) → centA ≡ r 
+        eqA r = inv ((inv (g-f r)) · (ap g (inv (eqB (f r)))))
